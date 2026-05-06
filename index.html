@@ -3107,6 +3107,114 @@ h2 {
   }
 }
 
+/* ============================================
+   ÇOKLU SEÇİM (Multi-select) — v1.10
+   ============================================ */
+
+.multi-select-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.multi-select-card {
+  background: rgba(255,255,255,0.03);
+  border: 0.5px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.multi-select-card:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.multi-select-card.selected {
+  background: rgba(59,130,246,0.12);
+  border-color: rgba(59,130,246,0.4);
+  border-width: 1px;
+  padding: 11.5px 13.5px;
+}
+
+.multi-select-card.selected::before {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  background: #3b82f6;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: white;
+  font-weight: bold;
+}
+
+.multi-select-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.multi-select-desc {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+}
+
+.multi-select-card.exclusive {
+  background: rgba(212,146,58,0.06);
+  border-color: rgba(212,146,58,0.2);
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.multi-select-card.exclusive .multi-select-name {
+  color: #fcd34d;
+}
+
+.multi-select-card.exclusive.selected {
+  background: rgba(212,146,58,0.18);
+  border-color: rgba(212,146,58,0.5);
+}
+
+.multi-select-card.exclusive.selected::before {
+  background: #d4923a;
+}
+
+.multi-select-helper {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 14px;
+}
+
+.multi-select-info {
+  display: none;
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: rgba(59,130,246,0.06);
+  border-left: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .multi-select-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 
 .nav-dropdown { position: relative; display: inline-block; }
 .nav-dropdown-toggle { cursor: pointer; color: var(--color-text-soft); user-select: none; }
@@ -3278,7 +3386,7 @@ h2 {
     <button class="btn-primary" style="font-size: 16px; padding: 16px 32px;" onclick="startNewTank()">Tankımı Değerlendir →</button>
   </section>
   <footer class="footer">
-    <div class="logo"><div class="logo-line" style="height:16px; width:1.5px;"></div><span style="font-size:13px;"><span style="font-weight:300;">Aqua</span><span style="font-weight:700;">Vera</span> · Demo v1.9</span></div>
+    <div class="logo"><div class="logo-line" style="height:16px; width:1.5px;"></div><span style="font-size:13px;"><span style="font-weight:300;">Aqua</span><span style="font-weight:700;">Vera</span> · Demo v1.10</span></div>
     <div class="footer-links"><span>9 Modül</span><span>30 Tür</span><span>Bilimsel Referanslar</span></div>
   </footer>
 </div>
@@ -3292,19 +3400,96 @@ h2 {
       <h3>Tankının temelleri</h3>
       <div class="form-row"><label>Tank hacmi (litre)</label><input type="number" id="tank-volume" class="form-input" placeholder="Örn: 100" min="5" max="5000" /><div class="helper">60×30×30 ≈ 54L · 80×35×40 ≈ 112L · 100×40×50 ≈ 200L</div></div>
       <div class="form-row"><label>Tank kurulum tarihi (opsiyonel)</label><input type="date" id="setup-date" class="form-input" /></div>
-      <div class="form-row"><label>Substrat tipi</label>
-        <div class="radio-group">
-          <div class="radio-option" data-group="substrate" onclick="selectRadio('substrate', 'sand', 'substrate')">İnce Kum</div>
-          <div class="radio-option" data-group="substrate" onclick="selectRadio('substrate', 'gravel', 'substrate')">Çakıl</div>
-          <div class="radio-option" data-group="substrate" onclick="selectRadio('substrate', 'aquasoil', 'substrate')">Aktif Toprak</div>
-          <div class="radio-option" data-group="substrate" onclick="selectRadio('substrate', 'inert', 'substrate')">İnert</div>
-        </div></div>
+      <div class="form-row">
+        <label>Taban Malzemesi</label>
+        <div class="multi-select-helper">Birden fazla seçebilirsiniz</div>
+        <div class="multi-select-grid">
+          <div class="multi-select-card" data-group="substrate" data-value="sand" onclick="selectMulti('substrate', 'sand', 'substrate', false)">
+            <div class="multi-select-name">İnce Kum</div>
+            <div class="multi-select-desc">İnert · 1-2mm</div>
+          </div>
+          <div class="multi-select-card" data-group="substrate" data-value="gravel" onclick="selectMulti('substrate', 'gravel', 'substrate', false)">
+            <div class="multi-select-name">Çakıl</div>
+            <div class="multi-select-desc">İnert · 3-8mm</div>
+          </div>
+          <div class="multi-select-card" data-group="substrate" data-value="aquasoil" onclick="selectMulti('substrate', 'aquasoil', 'substrate', false)">
+            <div class="multi-select-name">Aktif Toprak</div>
+            <div class="multi-select-desc">Bitkili · pH düşürür</div>
+          </div>
+          <div class="multi-select-card" data-group="substrate" data-value="lavarock" onclick="selectMulti('substrate', 'lavarock', 'substrate', false)">
+            <div class="multi-select-name">Lav Kırığı</div>
+            <div class="multi-select-desc">Alt katman · Drenaj</div>
+          </div>
+          <div class="multi-select-card" data-group="substrate" data-value="hagensand" onclick="selectMulti('substrate', 'hagensand', 'substrate', false)">
+            <div class="multi-select-name">Hagen Kum</div>
+            <div class="multi-select-desc">İnert · Beyaz</div>
+          </div>
+          <div class="multi-select-card" data-group="substrate" data-value="coral" onclick="selectMulti('substrate', 'coral', 'substrate', false)">
+            <div class="multi-select-name">Mercan Kumu</div>
+            <div class="multi-select-desc">pH yükseltir</div>
+          </div>
+        </div>
+        <div class="multi-select-card exclusive" data-group="substrate" data-value="none" data-exclusive="true" onclick="selectMulti('substrate', 'none', 'substrate', true)">
+          <div>
+            <div class="multi-select-name">Kullanmıyorum (cam-alt)</div>
+            <div class="multi-select-desc">Bu seçildiğinde diğerleri otomatik temizlenir</div>
+          </div>
+        </div>
+        <div class="multi-select-info" id="substrate-info"></div>
+      </div>
       <div class="form-buttons"><button class="btn-secondary" onclick="prevStep()">← İptal</button><button class="btn-primary" onclick="nextStep()">Devam →</button></div>
     </div>
     <div id="step-2" class="form-step">
       <h3>Filtrasyon sistemi</h3>
-      <div class="form-row"><label>Filtre tipi</label><select id="filter-type" class="form-select"><option value="">Seçin...</option><option value="internal">İç filtre</option><option value="external">Dış filtre</option><option value="hob">HOB</option><option value="sump">Sump</option></select></div>
-      <div class="form-row"><label>Filtre debisi (L/saat)</label><input type="number" id="filter-flow" class="form-input" placeholder="Örn: 600" min="50" max="10000" /></div>
+      <div class="form-row">
+        <label>Filtre Tipi</label>
+        <div class="multi-select-helper">Birden fazla seçebilirsiniz</div>
+        <div class="multi-select-grid" style="grid-template-columns: repeat(2, 1fr);">
+          <div class="multi-select-card" data-group="filter" data-value="external" onclick="selectMulti('filter', 'external', 'filterTypes', false)">
+            <div class="multi-select-name">Dış Filtre (Canister)</div>
+            <div class="multi-select-desc">Eheim, Sera, JBL · 50-1000L</div>
+          </div>
+          <div class="multi-select-card" data-group="filter" data-value="internal" onclick="selectMulti('filter', 'internal', 'filterTypes', false)">
+            <div class="multi-select-name">İç Filtre</div>
+            <div class="multi-select-desc">Cam içi, hazır pompalı · 20-200L</div>
+          </div>
+          <div class="multi-select-card" data-group="filter" data-value="hob" onclick="selectMulti('filter', 'hob', 'filterTypes', false)">
+            <div class="multi-select-name">HOB (Asılı Sırt)</div>
+            <div class="multi-select-desc">Hang-On-Back · 30-200L</div>
+          </div>
+          <div class="multi-select-card" data-group="filter" data-value="sump" onclick="selectMulti('filter', 'sump', 'filterTypes', false)">
+            <div class="multi-select-name">Sump Sistemi</div>
+            <div class="multi-select-desc">Alt-tank rezervi · 200L+</div>
+          </div>
+          <div class="multi-select-card" data-group="filter" data-value="hamburg" onclick="selectMulti('filter', 'hamburg', 'filterTypes', false)">
+            <div class="multi-select-name">Hamburg Mat Filtre</div>
+            <div class="multi-select-desc">Karides/yavru · Tüm boyutlar</div>
+          </div>
+          <div class="multi-select-card" data-group="filter" data-value="pipo" onclick="selectMulti('filter', 'pipo', 'filterTypes', false)">
+            <div class="multi-select-name">Pipo Filtre (Süngerli)</div>
+            <div class="multi-select-desc">Hava taşlı · 20-100L</div>
+          </div>
+          <div class="multi-select-card" data-group="filter" data-value="sponge" onclick="selectMulti('filter', 'sponge', 'filterTypes', false)">
+            <div class="multi-select-name">Sünger Filtre</div>
+            <div class="multi-select-desc">Hava motorlu · Yavru/karides</div>
+          </div>
+          <div class="multi-select-card" data-group="filter" data-value="topflow" onclick="selectMulti('filter', 'topflow', 'filterTypes', false)">
+            <div class="multi-select-name">Üst Akış (Top Filter)</div>
+            <div class="multi-select-desc">Açık üst tank · 50-300L</div>
+          </div>
+        </div>
+        <div class="multi-select-card exclusive" data-group="filter" data-value="none" data-exclusive="true" onclick="selectMulti('filter', 'none', 'filterTypes', true)">
+          <div>
+            <div class="multi-select-name">Filtrem Yok (Walstad metodu)</div>
+            <div class="multi-select-desc">Doğal döngü · Bitki yoğun bakım</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Toplam Filtre Debisi (L/saat)</label>
+        <input type="number" id="filter-flow" class="form-input" placeholder="Örn: 600" min="0" max="10000" />
+        <div class="helper">Birden fazla filtreniz varsa toplam debiyi yazın. Filtrem yok seçtiyseniz 0 yazın.</div>
+      </div>
       <div class="form-buttons"><button class="btn-secondary" onclick="prevStep()">← Geri</button><button class="btn-primary" onclick="nextStep()">Devam →</button></div>
     </div>
     <div id="step-3" class="form-step">
@@ -3315,7 +3500,7 @@ h2 {
     </div>
     <div id="step-4" class="form-step">
       <h3>Aydınlatma & Bitki</h3>
-      <div class="form-row"><label>Aydınlatma gücü (Watt)</label><input type="number" id="light-watts" class="form-input" placeholder="Örn: 30" min="0" max="500" /></div>
+      <div class="form-row"><label>Aydınlatma gücü (Watt)</label><input type="number" id="light-watts" class="form-input" placeholder="Bilmiyorsanız boş bırakın" min="0" max="500" /><div class="helper">Aydınlatma watt değerini bilmiyorsanız boş bırakın — bitki yoğunluğu ve hacme göre öneri sunarız.</div></div>
       <div class="form-row"><label>Aydınlatma süresi (saat)</label><input type="number" id="light-hours" class="form-input" placeholder="Örn: 8" min="1" max="24" value="8" /></div>
       <div class="form-row"><label>Bitki yoğunluğu</label>
         <div class="radio-group">
@@ -4810,6 +4995,84 @@ function selectRadio(group, value, key) {
   if (key) state.tank[key] = value;
 }
 
+// Çoklu seçim - "Kullanmıyorum" özel davranışı destekli
+function selectMulti(group, value, key, exclusive) {
+  if (!state.tank[key]) state.tank[key] = [];
+
+  const clickedEl = event.currentTarget;
+  const isExclusive = exclusive === true; // "Kullanmıyorum" tıklandı
+
+  if (isExclusive) {
+    // "Kullanmıyorum" → diğer her şeyi temizle, sadece bunu işaretle
+    document.querySelectorAll(`[data-group="${group}"]`).forEach(el => el.classList.remove('selected'));
+    if (state.tank[key].includes(value)) {
+      // Tekrar tıklandı → temizle
+      state.tank[key] = [];
+    } else {
+      clickedEl.classList.add('selected');
+      state.tank[key] = [value];
+    }
+  } else {
+    // Normal seçim → "Kullanmıyorum"u kaldır, bu seçimi toggle et
+    const exclusiveEls = document.querySelectorAll(`[data-group="${group}"][data-exclusive="true"]`);
+    exclusiveEls.forEach(el => el.classList.remove('selected'));
+
+    // "Kullanmıyorum" değerlerini state'ten kaldır
+    state.tank[key] = state.tank[key].filter(v => {
+      const el = document.querySelector(`[data-group="${group}"][data-value="${v}"]`);
+      return !el || el.dataset.exclusive !== 'true';
+    });
+
+    // Toggle current
+    if (state.tank[key].includes(value)) {
+      state.tank[key] = state.tank[key].filter(v => v !== value);
+      clickedEl.classList.remove('selected');
+    } else {
+      state.tank[key].push(value);
+      clickedEl.classList.add('selected');
+    }
+  }
+
+  // Akıllı bilgi kutusu güncelle
+  updateMultiSelectInfo(group, key);
+}
+
+// Çoklu seçim için bilgi kutusu güncelle
+function updateMultiSelectInfo(group, key) {
+  const infoEl = document.getElementById(`${group}-info`);
+  if (!infoEl) return;
+
+  const selected = state.tank[key] || [];
+  const messages = {
+    substrate: {
+      'sand+aquasoil': 'İnce Kum + Aktif Toprak — Bitkili akvaryumlarda yaygın kombinasyon. Toprak alta, kum üste döşenir.',
+      'lavarock+aquasoil': 'Lav Kırığı + Aktif Toprak — Bitki kökleri için ideal drenaj sağlar.',
+      'gravel+coral': 'Çakıl + Mercan Kumu — Sert su (Afrika cichlid) için uygun.',
+      'none': 'Cam-alt akvaryum — Karides ya da minimal bakım için tercih edilir. Ancak biyolojik döngü kurmak biraz daha zor olabilir.'
+    }
+  };
+
+  if (selected.length === 0) {
+    infoEl.style.display = 'none';
+    return;
+  }
+
+  // Kombinasyon kontrolü
+  let msg = '';
+  if (selected.includes('none')) {
+    msg = messages.substrate['none'];
+  } else if (selected.length >= 2) {
+    const key2 = selected.sort().join('+');
+    msg = messages[group]?.[key2] || `${selected.length} adet taban malzemesi seçtiniz. Çok katmanlı kurulum için uygun.`;
+  } else {
+    infoEl.style.display = 'none';
+    return;
+  }
+
+  infoEl.style.display = 'block';
+  infoEl.innerHTML = `<strong>💡 Bilgi:</strong> ${msg}`;
+}
+
 // ============================================
 // SPECIES PICKER
 // ============================================
@@ -5110,9 +5373,14 @@ const SPECIES_IMAGES = {
 // Tür videoları (Wikimedia Commons) - opsiyonel, yoksa "Yakında" görünür
 const SPECIES_VIDEOS = {
   "guppy": {
-    url: "https://upload.wikimedia.org/wikipedia/commons/c/c6/Guppy_riproduzione.ogv",
+    sources: [
+      // WebM önce — Chrome/Firefox/Edge (modern tarayıcılar)
+      { url: "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c6/Guppy_riproduzione.ogv/Guppy_riproduzione.ogv.480p.vp9.webm", type: "video/webm; codecs=vp9" },
+      // Ogg Theora yedek
+      { url: "https://upload.wikimedia.org/wikipedia/commons/c/c6/Guppy_riproduzione.ogv", type: "video/ogg" }
+    ],
     title: "Lepistes Üreme Davranışı",
-    desc: "Lepistes çiftlerinin üreme davranışı, 1 dk 42 sn (640×360, .ogv formatı)",
+    desc: "Lepistes çiftlerinin üreme davranışı, 1 dk 42 sn (640×360)",
     source: "Wikimedia Commons · CC BY-SA"
   }
 };
@@ -5393,14 +5661,16 @@ function renderSpeciesTab(tab, s) {
     const video = SPECIES_VIDEOS[s.id];
 
     if (video) {
-      // Video mevcut - göster
+      // Video mevcut - çoklu format desteği (WebM önce, Ogg yedek)
+      const sources = video.sources.map(src => `<source src="${src.url}" type="${src.type}">`).join('');
+      const fallbackUrl = video.sources[video.sources.length - 1].url;
       return `
         <div class="species-video-container">
           <video class="species-video" controls preload="metadata" poster="${SPECIES_IMAGES[s.id] || ''}">
-            <source src="${video.url}" type="video/ogg">
+            ${sources}
             <p class="species-video-fallback">
-              ⚠️ Tarayıcınız bu video formatını (.ogv) desteklemiyor.
-              <a href="${video.url}" target="_blank" rel="noopener">Videoyu indirebilirsiniz</a>.
+              ⚠️ Tarayıcınız bu video formatını desteklemiyor.
+              <a href="${fallbackUrl}" target="_blank" rel="noopener">Videoyu indirip izleyebilirsiniz</a>.
             </p>
           </video>
           <div class="species-video-meta">
