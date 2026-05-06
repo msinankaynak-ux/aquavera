@@ -3215,6 +3215,55 @@ h2 {
   }
 }
 
+/* ============================================
+   BRAND NAME — AquaVera tutarlı tipografi
+   Prose içinde kullan: <span class="brand">AquaVera</span>
+   ============================================ */
+.brand {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.brand .aq {
+  font-weight: 300;
+}
+.brand .vr {
+  font-weight: 700;
+}
+
+/* AquaTube benzeri türev markalar */
+.brand-aquatube .aq {
+  font-weight: 300;
+}
+.brand-aquatube .tube {
+  font-weight: 700;
+}
+
+/* ============================================
+   YOUTUBE IFRAME (Video sekmesi)
+   ============================================ */
+
+.species-video-youtube-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+  box-shadow:
+    0 0 0 0.5px rgba(255,255,255,0.08),
+    0 12px 32px rgba(0,0,0,0.5);
+}
+
+.species-video-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
 
 .nav-dropdown { position: relative; display: inline-block; }
 .nav-dropdown-toggle { cursor: pointer; color: var(--color-text-soft); user-select: none; }
@@ -3386,7 +3435,7 @@ h2 {
     <button class="btn-primary" style="font-size: 16px; padding: 16px 32px;" onclick="startNewTank()">Tankımı Değerlendir →</button>
   </section>
   <footer class="footer">
-    <div class="logo"><div class="logo-line" style="height:16px; width:1.5px;"></div><span style="font-size:13px;"><span style="font-weight:300;">Aqua</span><span style="font-weight:700;">Vera</span> · Demo v1.10.1</span></div>
+    <div class="logo"><div class="logo-line" style="height:16px; width:1.5px;"></div><span style="font-size:13px;"><span style="font-weight:300;">Aqua</span><span style="font-weight:700;">Vera</span> · Demo v1.10.3</span></div>
     <div class="footer-links"><span>9 Modül</span><span>30 Tür</span><span>Bilimsel Referanslar</span></div>
   </footer>
 </div>
@@ -5401,17 +5450,17 @@ const SPECIES_IMAGES = {
 };
 
 // Tür videoları (Wikimedia Commons) - opsiyonel, yoksa "Yakında" görünür
+// Tür video sistemi - 3 tip destekli:
+// 1. type: "youtube" → YouTube iframe embed
+// 2. type: "wikimedia" → HTML5 <video> + WebM/Ogg sources
+// 3. (sözlükte yoksa) → "Yakında" placeholder
 const SPECIES_VIDEOS = {
   "guppy": {
-    sources: [
-      // WebM önce — Chrome/Firefox/Edge (modern tarayıcılar)
-      { url: "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c6/Guppy_riproduzione.ogv/Guppy_riproduzione.ogv.480p.vp9.webm", type: "video/webm; codecs=vp9" },
-      // Ogg Theora yedek
-      { url: "https://upload.wikimedia.org/wikipedia/commons/c/c6/Guppy_riproduzione.ogv", type: "video/ogg" }
-    ],
-    title: "Lepistes Üreme Davranışı",
-    desc: "Lepistes çiftlerinin üreme davranışı, 1 dk 42 sn (640×360)",
-    source: "Wikimedia Commons · CC BY-SA"
+    type: "youtube",
+    youtubeId: "oB2xPTjJHNM",
+    title: "Lepistes — Akvaryumda Doğal Davranış",
+    desc: "Akvaryumda lepistes balıklarının yüzme, beslenme ve sosyal davranışlarını gösteren kısa bir görüntü.",
+    source: "YouTube · Embed izni mevcut"
   }
 };
 
@@ -5691,18 +5740,37 @@ function renderSpeciesTab(tab, s) {
     const video = SPECIES_VIDEOS[s.id];
 
     if (video) {
-      // Video mevcut - çoklu format desteği (WebM önce, Ogg yedek)
-      const sources = video.sources.map(src => `<source src="${src.url}" type="${src.type}">`).join('');
-      const fallbackUrl = video.sources[video.sources.length - 1].url;
-      return `
-        <div class="species-video-container">
+      let playerHtml = '';
+
+      if (video.type === 'youtube') {
+        // YouTube iframe embed - tüm tarayıcılarda çalışır
+        playerHtml = `
+          <div class="species-video-youtube-wrapper">
+            <iframe class="species-video-iframe"
+              src="https://www.youtube.com/embed/${video.youtubeId}?rel=0&modestbranding=1"
+              title="${video.title}"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+              loading="lazy"></iframe>
+          </div>`;
+      } else if (video.type === 'wikimedia' || video.sources) {
+        // HTML5 video - Wikimedia kaynakları
+        const sources = (video.sources || []).map(src => `<source src="${src.url}" type="${src.type}">`).join('');
+        const fallbackUrl = video.sources[video.sources.length - 1].url;
+        playerHtml = `
           <video class="species-video" controls preload="metadata" poster="${SPECIES_IMAGES[s.id] || ''}">
             ${sources}
             <p class="species-video-fallback">
               ⚠️ Tarayıcınız bu video formatını desteklemiyor.
               <a href="${fallbackUrl}" target="_blank" rel="noopener">Videoyu indirip izleyebilirsiniz</a>.
             </p>
-          </video>
+          </video>`;
+      }
+
+      return `
+        <div class="species-video-container">
+          ${playerHtml}
           <div class="species-video-meta">
             <h5>${video.title}</h5>
             <p class="species-video-desc">${video.desc}</p>
