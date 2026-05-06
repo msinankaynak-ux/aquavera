@@ -3386,7 +3386,7 @@ h2 {
     <button class="btn-primary" style="font-size: 16px; padding: 16px 32px;" onclick="startNewTank()">Tankımı Değerlendir →</button>
   </section>
   <footer class="footer">
-    <div class="logo"><div class="logo-line" style="height:16px; width:1.5px;"></div><span style="font-size:13px;"><span style="font-weight:300;">Aqua</span><span style="font-weight:700;">Vera</span> · Demo v1.10</span></div>
+    <div class="logo"><div class="logo-line" style="height:16px; width:1.5px;"></div><span style="font-size:13px;"><span style="font-weight:300;">Aqua</span><span style="font-weight:700;">Vera</span> · Demo v1.10.1</span></div>
     <div class="footer-links"><span>9 Modül</span><span>30 Tür</span><span>Bilimsel Referanslar</span></div>
   </footer>
 </div>
@@ -4859,8 +4859,9 @@ const state = {
   tank: {
     volume: null,
     setupDate: null,
-    substrate: null,
-    filterType: null,
+    substrate: [],        // Array - çoklu taban malzemesi
+    filterType: null,     // Geriye uyumluluk - filterTypes[0]
+    filterTypes: [],      // Array - çoklu filtre tipi
     filterFlowRate: null,
     heaterWatts: null,
     roomTemp: null,
@@ -4933,11 +4934,26 @@ function validateStep(step) {
     const v = document.getElementById('tank-volume').value;
     if (!v || parseFloat(v) < 5 || parseFloat(v) > 5000) {
       valid = false; msg = 'Tank hacmini 5-5000 L arasında girin.';
+    } else if (!state.tank.substrate || !Array.isArray(state.tank.substrate) || state.tank.substrate.length === 0) {
+      valid = false; msg = 'En az bir taban malzemesi seçin (veya "Kullanmıyorum" seçeneğini işaretleyin).';
     }
   } else if (step === 2) {
-    const flow = document.getElementById('filter-flow').value;
-    if (!flow || parseFloat(flow) < 50) {
-      valid = false; msg = 'Filtre debisini girin (en az 50 L/saat).';
+    // Çoklu filtre seçimi kontrolü
+    if (!state.tank.filterTypes || !Array.isArray(state.tank.filterTypes) || state.tank.filterTypes.length === 0) {
+      valid = false; msg = 'En az bir filtre tipi seçin (veya "Filtrem Yok" seçeneğini işaretleyin).';
+    } else {
+      // Filtrem yok seçildiyse debi 0 olabilir, değilse min 50
+      const isNoFilter = state.tank.filterTypes.includes('none');
+      const flowEl = document.getElementById('filter-flow');
+      const flow = flowEl ? flowEl.value : '';
+
+      if (isNoFilter) {
+        // Filtrem yok - debi gerekmez
+      } else {
+        if (!flow || parseFloat(flow) < 50) {
+          valid = false; msg = 'Filtre debisini girin (en az 50 L/saat).';
+        }
+      }
     }
   } else if (step === 3) {
     const w = document.getElementById('heater-watts').value;
@@ -4949,10 +4965,7 @@ function validateStep(step) {
     if (!state.tank.plantDensity) {
       valid = false; msg = 'Bitki yoğunluğunu seçin.';
     }
-    const lw = document.getElementById('light-watts').value;
-    if (!lw) {
-      valid = false; msg = 'Aydınlatma watt değerini girin.';
-    }
+    // Aydınlatma artık OPSİYONEL — boş bırakılabilir (otomatik öneri için)
   } else if (step === 5) {
     if (state.inhabitants.length === 0) {
       valid = false; msg = 'En az bir balık türü ekleyin.';
@@ -4969,15 +4982,26 @@ function saveStep(step) {
   if (step === 1) {
     state.tank.volume = parseFloat(document.getElementById('tank-volume').value);
     state.tank.setupDate = document.getElementById('setup-date').value || null;
-    // substrate radio'dan zaten kaydedildi
+    // substrate çoklu seçim selectMulti tarafından zaten state.tank.substrate'e kaydedildi (array)
   } else if (step === 2) {
-    state.tank.filterFlowRate = parseFloat(document.getElementById('filter-flow').value);
-    state.tank.filterType = document.getElementById('filter-type').value;
+    // Filtre tipleri zaten state.tank.filterTypes'e selectMulti ile array olarak kaydedildi
+    const flowEl = document.getElementById('filter-flow');
+    const flow = flowEl ? flowEl.value : '';
+    if (flow) {
+      state.tank.filterFlowRate = parseFloat(flow);
+    } else {
+      state.tank.filterFlowRate = 0; // Filtrem yok durumu
+    }
+    // Geriye uyumluluk için ilk filtre tipini de filterType olarak kaydet
+    if (state.tank.filterTypes && state.tank.filterTypes.length > 0) {
+      state.tank.filterType = state.tank.filterTypes[0];
+    }
   } else if (step === 3) {
     state.tank.heaterWatts = parseFloat(document.getElementById('heater-watts').value);
     state.tank.roomTemp = parseFloat(document.getElementById('room-temp').value);
   } else if (step === 4) {
-    state.tank.lightWatts = parseFloat(document.getElementById('light-watts').value);
+    const lwVal = document.getElementById('light-watts').value;
+    state.tank.lightWatts = lwVal ? parseFloat(lwVal) : null; // null = otomatik hesaplanacak
     state.tank.lightHours = parseFloat(document.getElementById('light-hours').value) || 8;
   }
 }
@@ -5234,8 +5258,11 @@ function toggleEval(idx) {
 
 function startNewTank() {
   state.tank = {
-    volume: null, setupDate: null, substrate: null,
-    filterType: null, filterFlowRate: null,
+    volume: null, setupDate: null,
+    substrate: [],        // Array reset
+    filterType: null,
+    filterTypes: [],      // Array reset
+    filterFlowRate: null,
     heaterWatts: null, roomTemp: null,
     lightWatts: null, lightHours: null, plantDensity: null
   };
@@ -5245,6 +5272,9 @@ function startNewTank() {
   // Form fields'i temizle
   document.querySelectorAll('input').forEach(i => { if (i.type !== 'button') i.value = ''; });
   document.querySelectorAll('.radio-option').forEach(r => r.classList.remove('selected'));
+  document.querySelectorAll('.multi-select-card').forEach(c => c.classList.remove('selected'));
+  // Bilgi kutularını gizle
+  document.querySelectorAll('.multi-select-info').forEach(i => i.style.display = 'none');
   renderInhabitants();
 
   showView('form');
